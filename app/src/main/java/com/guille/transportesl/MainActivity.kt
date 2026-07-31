@@ -16,6 +16,7 @@ import com.guille.transportesl.ui.theme.TransporteSLTheme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        //Para que la barra de estado se ponga transparente
         enableEdgeToEdge()
         setContent {
             TransporteSLTheme {
