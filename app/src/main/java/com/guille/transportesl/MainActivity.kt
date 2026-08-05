@@ -6,11 +6,16 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -81,8 +86,33 @@ fun PantallaInicial( modifier : Modifier = Modifier){
                 )
             }
         }
+    }else{
+        val lineas = listOf("571","573A","573B","562","563A","563B","551","552","553","555","542","543","717","512","511"
+            ,"552","553","555","542","543","717","512","511","552","553","555","542","543","717","512","511","552","553","555","542","543","717","512","511")
+        Column( modifier = modifier.fillMaxSize().padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally)
+                {
+                    Text( text = "Seleccioná una línea",
+                          style = MaterialTheme.typography.titleLarge)
+                        Spacer(Modifier.padding(15.dp))
+                        LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                        items(lineas) { linea -> ItemLinea( linea = linea)
+                            HorizontalDivider()
+                        }
+                    }
+                }
     }
 }
+
+@Composable
+fun ItemLinea( linea : String, modifier: Modifier = Modifier){
+    Row(modifier = modifier.fillMaxWidth().padding(vertical = 18.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+            Text(text = linea,
+                 style = MaterialTheme.typography.titleLarge)
+    }
+}
+
 
 @Preview(showBackground = true)
 @Composable
