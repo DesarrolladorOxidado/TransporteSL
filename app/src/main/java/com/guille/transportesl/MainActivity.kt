@@ -50,30 +50,38 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun PantallaInicial( modifier : Modifier = Modifier){
-   Column(
-       modifier = modifier
-           .fillMaxSize()
-           .padding(24.dp),
-       verticalArrangement = Arrangement.Center,
-       horizontalAlignment = Alignment.CenterHorizontally
-   ){
-       var mensaje by remember {
-           mutableStateOf("Información del transporte público de San Luis")
-       }
-       Text( text = "TransporteSL",
-             style = MaterialTheme.typography.headlineMedium)
-       Spacer( modifier = Modifier.height(12.dp))
-       Text( text = mensaje)
-       Spacer( modifier = Modifier.height(24.dp))
-       Button(onClick = {
-           mensaje = "Bienvenido!"
-       })
-       {
-           Text( text = "Continuar",
-                 style = MaterialTheme.typography.titleLarge)
-       }
-   }
 
+    var mostrarPantallaInicial by remember {
+        mutableStateOf(true)
+    }
+    if (mostrarPantallaInicial) {
+
+        Column(
+            modifier = modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+
+            Text(
+                text = "TransporteSL",
+                style = MaterialTheme.typography.headlineMedium
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(text = "Información del transporte público de San Luis")
+            Spacer(modifier = Modifier.height(24.dp))
+            Button(onClick = {
+                mostrarPantallaInicial = false
+            })
+            {
+                Text(
+                    text = "Continuar",
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+        }
+    }
 }
 
 @Preview(showBackground = true)
