@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -90,16 +91,30 @@ fun PantallaInicial( modifier : Modifier = Modifier){
         val lineas = listOf("571","573A","573B","562","563A","563B","551","552","553","555","542","543","717","512","511"
             ,"552","553","555","542","543","717","512","511","552","553","555","542","543","717","512","511","552","553","555","542","543","717","512","511")
         Column( modifier = modifier.fillMaxSize().padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally)
-                {
-                    Text( text = "Seleccioná una línea",
-                          style = MaterialTheme.typography.titleLarge)
-                        Spacer(Modifier.padding(15.dp))
-                        LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                        items(lineas) { linea -> ItemLinea( linea = linea)
-                            HorizontalDivider()
-                        }
+                horizontalAlignment = Alignment.CenterHorizontally) {
+
+                   Box(modifier = Modifier.fillMaxWidth()) {
+
+                       Button(modifier = Modifier.align(Alignment.CenterStart),
+                           onClick = { mostrarPantallaInicial = true }) {
+                           Text(text = "<-")
+                       }
+
+                       Text(
+                           modifier = Modifier.align(Alignment.Center),
+                           text = "Seleccioná una línea",
+                           style = MaterialTheme.typography.titleLarge
+                       )
+                   }
+
+                    Spacer(Modifier.padding(15.dp))
+
+                    LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+                            items(lineas) { linea -> ItemLinea( linea = linea)
+                                HorizontalDivider()
+                            }
                     }
+
                 }
     }
 }
