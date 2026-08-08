@@ -2,6 +2,7 @@ package com.guille.transportesl
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Arrangement
@@ -64,97 +65,131 @@ fun TransporteSLApp(modifier : Modifier = Modifier){
         mutableStateOf("")
     }
 
+    BackHandler( enabled = pantallaActual != Pantalla.INICIAL) {
+        when(pantallaActual){
+            Pantalla.SELECCION_LINEA ->{
+                pantallaActual = Pantalla.INICIAL
+            }
+
+            Pantalla.RECORRIDO -> {
+                pantallaActual = Pantalla.SELECCION_LINEA
+            }
+
+            Pantalla.INICIAL -> Unit
+        }
+    }
+
+
     when (pantallaActual){
         Pantalla.INICIAL -> {
-            Column(
-                modifier = modifier
-                    .fillMaxSize()
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-
-                Text(
-                    text = "TransporteSL",
-                    style = MaterialTheme.typography.headlineMedium
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(text = "Información del transporte público de San Luis")
-                Spacer(modifier = Modifier.height(24.dp))
-                Button(onClick = {
-                    pantallaActual = Pantalla.SELECCION_LINEA
-                })
-                {
-                    Text(
-                        text = "Continuar",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                }
-            }
+            PantallaInicial(modifier = modifier, onContinuar = {
+                pantallaActual = Pantalla.SELECCION_LINEA
+            })
         }
 
         Pantalla.SELECCION_LINEA -> {
-            val lineas = listOf("571","573A","573B","562","563A","563B","551","552","553","555","542","543","717","512","511"
-                ,"552","553","555","542","543","717","512","511","552","553","555","542","543","717","512","511","552","553","555","542","543","717","512","511")
-            Column( modifier = modifier.fillMaxSize().padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally) {
-
-                Box(modifier = Modifier.fillMaxWidth()) {
-
-                    Button(modifier = Modifier.align(Alignment.CenterStart),
-                        onClick = { pantallaActual = Pantalla.INICIAL }) {
-                        Text(text = "<-")
-                    }
-
-                    Text(
-                        modifier = Modifier.align(Alignment.Center),
-                        text = "Seleccioná una línea",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                }
-
-                Spacer(Modifier.height(15.dp))
-
-                LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
-                    items(lineas) { linea -> ItemLinea( linea = linea, onClick = {
-                        lineaSeleccionada = linea
-                        pantallaActual = Pantalla.RECORRIDO
-                    })
-                        HorizontalDivider()
-                    }
-                }
-
-            }
+            PantallaSeleccion(modifier = modifier, onSeleccionLinea = {linea ->
+                lineaSeleccionada = linea
+                pantallaActual = Pantalla.RECORRIDO
+            }, onVolver = {
+               pantallaActual = Pantalla.INICIAL
+            })
         }
 
         Pantalla.RECORRIDO -> {
 
-            Column(modifier = modifier.fillMaxSize().padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally)
-            {
-                Box(modifier = Modifier.fillMaxWidth()) {
-
-                    Button(modifier = Modifier.align(Alignment.CenterStart),
-                        onClick = { pantallaActual = Pantalla.SELECCION_LINEA }) {
-                        Text(text = "<-")
-                    }
-
-                    Text(
-                        modifier = Modifier.align(Alignment.Center),
-                        text = "Recorrido",
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                }
-
-                Spacer(Modifier.height(15.dp))
-
-
-                Text(text = lineaSeleccionada)
-            }
+            PantallaRecorrido(modifier = modifier, lineaSeleccionada = lineaSeleccionada, onVolver = {
+                pantallaActual = Pantalla.SELECCION_LINEA
+            })
         }
     }
 }
 
+@Composable
+fun PantallaInicial(modifier : Modifier = Modifier, onContinuar : ()-> Unit){
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+
+        Text(
+            text = "TransporteSL",
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(text = "Información del transporte público de San Luis")
+        Spacer(modifier = Modifier.height(24.dp))
+        Button(onClick = onContinuar)
+        {
+            Text(
+                text = "Continuar",
+                style = MaterialTheme.typography.titleLarge
+            )
+        }
+    }
+}
+
+@Composable
+fun PantallaSeleccion( modifier : Modifier = Modifier, onSeleccionLinea : (String) -> Unit, onVolver : () -> Unit){
+    val lineas = listOf("571","573A","573B","562","563A","563B","551","552","553","555","542","543","717","512","511"
+        ,"552","553","555","542","543","717","512","511","552","553","555","542","543","717","512","511","552","553","555","542","543","717","512","511")
+    Column( modifier = modifier.fillMaxSize().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally) {
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+
+            Button(modifier = Modifier.align(Alignment.CenterStart),
+                onClick = onVolver) {
+                Text(text = "<-")
+            }
+
+            Text(
+                modifier = Modifier.align(Alignment.Center),
+                text = "Seleccioná una línea",
+                style = MaterialTheme.typography.titleLarge
+            )
+        }
+
+        Spacer(Modifier.height(15.dp))
+
+        LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            items(lineas) { linea -> ItemLinea( linea = linea, onClick = {
+                onSeleccionLinea(linea)
+            })
+                HorizontalDivider()
+            }
+        }
+
+    }
+}
+@Composable
+fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : String, onVolver : () -> Unit){
+    Column(modifier = modifier.fillMaxSize().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally)
+    {
+        Box(modifier = Modifier.fillMaxWidth()) {
+
+            Button(modifier = Modifier.align(Alignment.CenterStart),
+                onClick = onVolver) {
+                Text(text = "<-")
+            }
+
+            Text(
+                modifier = Modifier.align(Alignment.Center),
+                text = "Recorrido",
+                style = MaterialTheme.typography.titleLarge
+            )
+        }
+
+        Spacer(Modifier.height(15.dp))
+
+
+        Text(text = lineaSeleccionada)
+    }
+}
 @Composable
 fun ItemLinea( linea : String, onClick : () -> Unit, modifier: Modifier = Modifier){
 
