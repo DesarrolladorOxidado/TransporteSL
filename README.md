@@ -27,6 +27,9 @@ Más que construir una aplicación, el objetivo es construir una base técnica s
 * Kotlin
 * Android Studio
 * Jetpack Compose
+* MapLibre Compose
+* OpenStreetMap (OSM)
+* OpenFreeMap
 * Git
 * GitHub
 
@@ -51,13 +54,13 @@ Actualmente el proyecto se encuentra en una etapa inicial de aprendizaje y const
 * Inicialización del repositorio Git.
 * Primeros commits.
 * Publicación del proyecto en GitHub.
+* Desarrollo de la primera interfaz.
+* Navegación entre pantallas.
+* Integración inicial con mapas mediante MapLibre Compose.
 
 ### 🔄 Próximos pasos
 
-* Desarrollo de la primera interfaz.
-* Navegación entre pantallas.
 * Visualización de recorridos.
-* Integración con mapas.
 * Gestión de datos del transporte.
 * Mejoras de arquitectura y organización del proyecto.
 
