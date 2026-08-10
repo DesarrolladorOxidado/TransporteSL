@@ -27,11 +27,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.guille.transportesl.ui.theme.TransporteSLTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import org.maplibre.compose.camera.CameraPosition
+import org.maplibre.compose.camera.rememberCameraState
+import org.maplibre.compose.expressions.dsl.const
+import org.maplibre.compose.layers.CircleLayer
+import org.maplibre.compose.map.MaplibreMap
+import org.maplibre.compose.sources.GeoJsonData
+import org.maplibre.compose.sources.rememberGeoJsonSource
+import org.maplibre.compose.style.BaseStyle
+import org.maplibre.spatialk.geojson.Point
+import org.maplibre.spatialk.geojson.Position
 
 enum class Pantalla{
     INICIAL,
@@ -167,6 +176,14 @@ fun PantallaSeleccion( modifier : Modifier = Modifier, onSeleccionLinea : (Strin
 }
 @Composable
 fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : String, onVolver : () -> Unit){
+
+
+    val cameraState = rememberCameraState( firstPosition = CameraPosition(target = Position(
+        -57.55,
+        -38.00
+    ), zoom = 12.0
+    ))
+
     Column(modifier = modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally)
     {
@@ -188,6 +205,27 @@ fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : Strin
 
 
         Text(text = lineaSeleccionada)
+
+        MaplibreMap(baseStyle = BaseStyle.Uri(
+            "https://tiles.openfreemap.org/styles/liberty"
+        ),cameraState = cameraState){
+
+            val puntoSource = rememberGeoJsonSource(
+                data = GeoJsonData.Features(
+                    Point(
+                        Position(-57.55, -38.00)
+                    )
+                )
+            )
+
+            CircleLayer(
+                id = "punto-prueba",
+                source = puntoSource,
+                radius = const(10.dp)
+            )
+
+
+        }
     }
 }
 @Composable
