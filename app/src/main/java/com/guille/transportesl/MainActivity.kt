@@ -37,10 +37,13 @@ import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.layers.CircleLayer
+import org.maplibre.compose.layers.LineLayer
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.style.BaseStyle
+import org.maplibre.spatialk.geojson.LineString
+import org.maplibre.spatialk.geojson.MultiPoint
 import org.maplibre.spatialk.geojson.Point
 import org.maplibre.spatialk.geojson.Position
 
@@ -189,6 +192,19 @@ fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : Linea
     ), zoom = 12.0
     ))
 
+    val paradas = lineaSeleccionada.recorridoIda.paradas
+
+    val posiciones  = paradas.map {
+        parada -> Position(
+        parada.coordenada.longitud,
+        parada.coordenada.latitud)
+    }
+
+    val multiPoint = MultiPoint(posiciones)
+
+    val lineaRecorrido = LineString(posiciones)
+
+
     Column(modifier = modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally)
     {
@@ -215,11 +231,16 @@ fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : Linea
             "https://tiles.openfreemap.org/styles/liberty"
         ),cameraState = cameraState){
 
+
             val puntoSource = rememberGeoJsonSource(
                 data = GeoJsonData.Features(
-                    Point(
-                        Position(-57.55, -38.00)
-                    )
+                    geoJson = multiPoint
+                )
+            )
+
+            val recorridoSource = rememberGeoJsonSource(
+                data = GeoJsonData.Features(
+                    lineaRecorrido
                 )
             )
 
@@ -227,6 +248,11 @@ fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : Linea
                 id = "punto-prueba",
                 source = puntoSource,
                 radius = const(10.dp)
+            )
+
+            LineLayer(
+                id = "recorrido",
+                source = recorridoSource,
             )
 
 
