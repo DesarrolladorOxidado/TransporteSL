@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import com.guille.transportesl.ui.theme.TransporteSLTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.guille.transportesl.datos.DatosPrueba
+import com.guille.transportesl.modelos.Linea
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.expressions.dsl.const
@@ -71,7 +73,7 @@ fun TransporteSLApp(modifier : Modifier = Modifier){
     }
 
     var lineaSeleccionada by remember {
-        mutableStateOf("")
+        mutableStateOf<Linea?>(null)
     }
 
     BackHandler( enabled = pantallaActual != Pantalla.INICIAL) {
@@ -102,14 +104,18 @@ fun TransporteSLApp(modifier : Modifier = Modifier){
                 pantallaActual = Pantalla.RECORRIDO
             }, onVolver = {
                pantallaActual = Pantalla.INICIAL
-            })
+            }, lineas = DatosPrueba.lineas)
         }
 
         Pantalla.RECORRIDO -> {
 
-            PantallaRecorrido(modifier = modifier, lineaSeleccionada = lineaSeleccionada, onVolver = {
-                pantallaActual = Pantalla.SELECCION_LINEA
-            })
+            val linea = lineaSeleccionada
+
+            if ( linea != null ){
+                PantallaRecorrido(modifier = modifier, lineaSeleccionada = linea, onVolver = {
+                    pantallaActual = Pantalla.SELECCION_LINEA
+                })
+            }
         }
     }
 }
@@ -142,9 +148,8 @@ fun PantallaInicial(modifier : Modifier = Modifier, onContinuar : ()-> Unit){
 }
 
 @Composable
-fun PantallaSeleccion( modifier : Modifier = Modifier, onSeleccionLinea : (String) -> Unit, onVolver : () -> Unit){
-    val lineas = listOf("571","573A","573B","562","563A","563B","551","552","553","555","542","543","717","512","511"
-        ,"552","553","555","542","543","717","512","511","552","553","555","542","543","717","512","511","552","553","555","542","543","717","512","511")
+fun PantallaSeleccion( modifier : Modifier = Modifier, onSeleccionLinea : (Linea) -> Unit, onVolver : () -> Unit, lineas : List<Linea>){
+
     Column( modifier = modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
 
@@ -175,7 +180,7 @@ fun PantallaSeleccion( modifier : Modifier = Modifier, onSeleccionLinea : (Strin
     }
 }
 @Composable
-fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : String, onVolver : () -> Unit){
+fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : Linea, onVolver : () -> Unit){
 
 
     val cameraState = rememberCameraState( firstPosition = CameraPosition(target = Position(
@@ -204,7 +209,7 @@ fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : Strin
         Spacer(Modifier.height(15.dp))
 
 
-        Text(text = lineaSeleccionada)
+        Text(text = lineaSeleccionada.identificador)
 
         MaplibreMap(baseStyle = BaseStyle.Uri(
             "https://tiles.openfreemap.org/styles/liberty"
@@ -229,13 +234,13 @@ fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : Strin
     }
 }
 @Composable
-fun ItemLinea( linea : String, onClick : () -> Unit, modifier: Modifier = Modifier){
+fun ItemLinea( linea : Linea, onClick : () -> Unit, modifier: Modifier = Modifier){
 
     Surface( modifier = modifier.fillMaxWidth(), onClick = onClick) {
 
         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically) {
-            Text(text = linea,
+            Text(text = linea.identificador,
                 style = MaterialTheme.typography.titleLarge)
         }
     }
