@@ -71,6 +71,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun TransporteSLApp(modifier : Modifier = Modifier){
 
+    // remember conserva el valor entre recomposiciones;
+   // mutableStateOf hace que Compose observe ese valor y reaccione cuando cambia.
     var pantallaActual by remember {
         mutableStateOf(Pantalla.INICIAL)
     }
@@ -186,14 +188,15 @@ fun PantallaSeleccion( modifier : Modifier = Modifier, onSeleccionLinea : (Linea
 fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : Linea, onVolver : () -> Unit){
 
 
-    val cameraState = rememberCameraState( firstPosition = CameraPosition(target = Position(
-        -57.55,
-        -38.00
-    ), zoom = 12.0
-    ))
+    val cameraState = rememberCameraState( firstPosition = CameraPosition(
+        target = Position(-57.55, -38.00),
+        zoom = 12.0)
+    )
 
     val paradas = lineaSeleccionada.recorridoIda.paradas
 
+    // map recorre y transforma cada elemento, devolviendo una nueva colección.
+    // Aquí transforma las coordenadas de nuestro modelo en Position para MapLibre.
     val posiciones  = paradas.map {
         parada -> Position(
         parada.coordenada.longitud,
@@ -231,19 +234,24 @@ fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : Linea
             "https://tiles.openfreemap.org/styles/liberty"
         ),cameraState = cameraState){
 
-
+            // Features es una clase anidada dentro de la interfaz GeoJsonData.
+            // GeoJsonData.Features(...) llama al constructor de Features.
             val puntoSource = rememberGeoJsonSource(
                 data = GeoJsonData.Features(
                     geoJson = multiPoint
                 )
             )
 
+            // Features envuelve la geometría (MultiPoint/LineString) como GeoJsonData.
+            // rememberGeoJsonSource crea la fuente GeoJSON y la conserva entre recomposiciones.
             val recorridoSource = rememberGeoJsonSource(
                 data = GeoJsonData.Features(
                     lineaRecorrido
                 )
             )
 
+            //La geometría define QUÉ son los datos;
+            // la Layer define CÓMO se renderizan en el mapa.
             CircleLayer(
                 id = "punto-prueba",
                 source = puntoSource,
