@@ -17,6 +17,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -33,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.guille.transportesl.datos.DatosPrueba
 import com.guille.transportesl.modelos.Linea
+import com.guille.transportesl.modelos.Recorrido
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.expressions.dsl.const
@@ -44,7 +47,6 @@ import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.style.BaseStyle
 import org.maplibre.spatialk.geojson.LineString
 import org.maplibre.spatialk.geojson.MultiPoint
-import org.maplibre.spatialk.geojson.Point
 import org.maplibre.spatialk.geojson.Position
 
 enum class Pantalla{
@@ -155,7 +157,9 @@ fun PantallaInicial(modifier : Modifier = Modifier, onContinuar : ()-> Unit){
 @Composable
 fun PantallaSeleccion( modifier : Modifier = Modifier, onSeleccionLinea : (Linea) -> Unit, onVolver : () -> Unit, lineas : List<Linea>){
 
-    Column( modifier = modifier.fillMaxSize().padding(24.dp),
+    Column( modifier = modifier
+        .fillMaxSize()
+        .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
 
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -174,7 +178,9 @@ fun PantallaSeleccion( modifier : Modifier = Modifier, onSeleccionLinea : (Linea
 
         Spacer(Modifier.height(15.dp))
 
-        LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
+        LazyColumn(modifier = Modifier
+            .fillMaxWidth()
+            .weight(1f)) {
             items(lineas) { linea -> ItemLinea( linea = linea, onClick = {
                 onSeleccionLinea(linea)
             })
@@ -187,28 +193,13 @@ fun PantallaSeleccion( modifier : Modifier = Modifier, onSeleccionLinea : (Linea
 @Composable
 fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : Linea, onVolver : () -> Unit){
 
-
-    val cameraState = rememberCameraState( firstPosition = CameraPosition(
-        target = Position(-57.55, -38.00),
-        zoom = 12.0)
-    )
-
-    val paradas = lineaSeleccionada.recorridoIda.paradas
-
-    // map recorre y transforma cada elemento, devolviendo una nueva colección.
-    // Aquí transforma las coordenadas de nuestro modelo en Position para MapLibre.
-    val posiciones  = paradas.map {
-        parada -> Position(
-        parada.coordenada.longitud,
-        parada.coordenada.latitud)
+    var recorridoSeleccionado by remember {
+        mutableStateOf(lineaSeleccionada.recorridoIda)
     }
 
-    val multiPoint = MultiPoint(posiciones)
-
-    val lineaRecorrido = LineString(posiciones)
-
-
-    Column(modifier = modifier.fillMaxSize().padding(24.dp),
+    Column(modifier = modifier
+        .fillMaxSize()
+        .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally)
     {
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -230,41 +221,11 @@ fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : Linea
 
         Text(text = lineaSeleccionada.identificador)
 
-        MaplibreMap(baseStyle = BaseStyle.Uri(
-            "https://tiles.openfreemap.org/styles/liberty"
-        ),cameraState = cameraState){
+        SelectorRecorrido(recorridoSeleccionado = recorridoSeleccionado, lineaSeleccionada = lineaSeleccionada, onSeleccionRecorrido = {
+            recorrido -> recorridoSeleccionado = recorrido
+        })
 
-            // Features es una clase anidada dentro de la interfaz GeoJsonData.
-            // GeoJsonData.Features(...) llama al constructor de Features.
-            val puntoSource = rememberGeoJsonSource(
-                data = GeoJsonData.Features(
-                    geoJson = multiPoint
-                )
-            )
-
-            // Features envuelve la geometría (MultiPoint/LineString) como GeoJsonData.
-            // rememberGeoJsonSource crea la fuente GeoJSON y la conserva entre recomposiciones.
-            val recorridoSource = rememberGeoJsonSource(
-                data = GeoJsonData.Features(
-                    lineaRecorrido
-                )
-            )
-
-            //La geometría define QUÉ son los datos;
-            // la Layer define CÓMO se renderizan en el mapa.
-            CircleLayer(
-                id = "punto-prueba",
-                source = puntoSource,
-                radius = const(10.dp)
-            )
-
-            LineLayer(
-                id = "recorrido",
-                source = recorridoSource,
-            )
-
-
-        }
+        MapaRecorrido(recorridoSeleccionado)
     }
 }
 @Composable
@@ -272,10 +233,112 @@ fun ItemLinea( linea : Linea, onClick : () -> Unit, modifier: Modifier = Modifie
 
     Surface( modifier = modifier.fillMaxWidth(), onClick = onClick) {
 
-        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 18.dp),
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically) {
             Text(text = linea.identificador,
                 style = MaterialTheme.typography.titleLarge)
         }
     }
+}
+// Se pasa la línea para que el selector conozca los recorridos disponibles
+// y recorridoSeleccionado para que sepa cuál está activo actualmente.
+// Cuando el usuario elige otro recorrido, onSeleccionRecorrido informa
+// la selección a PantallaRecorrido, que actualiza su estado.
+@Composable
+fun SelectorRecorrido( recorridoSeleccionado : Recorrido, lineaSeleccionada : Linea, onSeleccionRecorrido : (Recorrido)->Unit){
+
+    var menuExpandido by remember {
+        mutableStateOf(false)
+    }
+
+    Box{
+        Surface( onClick = {
+            menuExpandido = true
+        }) {
+            Text( text = recorridoSeleccionado.sentido)
+        }
+
+        DropdownMenu(expanded = menuExpandido, onDismissRequest = {
+            menuExpandido = false
+        }) {
+
+            DropdownMenuItem( text = {
+                Text( text = lineaSeleccionada.recorridoIda.sentido) },
+                onClick = {
+                    onSeleccionRecorrido(lineaSeleccionada.recorridoIda)
+                    menuExpandido = false
+                })
+
+            DropdownMenuItem(
+                text = {
+                    Text( text = lineaSeleccionada.recorridoVuelta.sentido)
+                },
+                onClick = {
+                    onSeleccionRecorrido(lineaSeleccionada.recorridoVuelta)
+                    menuExpandido = false
+                })
+        }
+    }
+
+}
+
+@Composable
+fun MapaRecorrido(recorrido : Recorrido, modifier: Modifier = Modifier){
+
+    val cameraState = rememberCameraState( firstPosition = CameraPosition(
+        target = Position(-57.55, -38.00),
+        zoom = 12.0)
+    )
+
+    val paradas = recorrido.paradas
+
+    // map recorre y transforma cada elemento, devolviendo una nueva colección.
+    // Aquí transforma las coordenadas de nuestro modelo en Position para MapLibre.
+    val posiciones  = paradas.map {
+            parada -> Position(
+        parada.coordenada.longitud,
+        parada.coordenada.latitud)
+    }
+
+    val multiPoint = MultiPoint(posiciones)
+
+    val lineaRecorrido = LineString(posiciones)
+
+    MaplibreMap(modifier = modifier,
+               baseStyle = BaseStyle.Uri(
+                    "https://tiles.openfreemap.org/styles/liberty"
+                ),cameraState = cameraState){
+
+                    // Features es una clase anidada dentro de la interfaz GeoJsonData.
+                    // GeoJsonData.Features(...) llama al constructor de Features.
+                    val puntoSource = rememberGeoJsonSource(
+                        data = GeoJsonData.Features(
+                            geoJson = multiPoint
+                        )
+                    )
+
+                    // Features envuelve la geometría (MultiPoint/LineString) como GeoJsonData.
+                    // rememberGeoJsonSource crea la fuente GeoJSON y la conserva entre recomposiciones.
+                    val recorridoSource = rememberGeoJsonSource(
+                        data = GeoJsonData.Features(
+                            lineaRecorrido
+                        )
+                    )
+
+                    //La geometría define QUÉ son los datos;
+                    // la Layer define CÓMO se renderizan en el mapa.
+                    CircleLayer(
+                        id = "punto-prueba",
+                        source = puntoSource,
+                        radius = const(10.dp)
+                    )
+
+                    LineLayer(
+                        id = "recorrido",
+                        source = recorridoSource,
+                    )
+
+                }
 }

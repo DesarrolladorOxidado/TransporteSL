@@ -22,28 +22,47 @@ object DatosPrueba {
         coordenada = Coordenada(longitud = -57.564917 , latitud =-38.021819 )
     )
 
+    private val paradaSanLuisJuanBJusto = Parada(
+        callePrincipal = "San Luis",
+        interseccion = "Juan B. Justo",
+        coordenada = Coordenada(-57.566718,-38.022157)
+    )
+
+    private val paradaDellepianeSolis = Parada(
+        callePrincipal = "Luis Dellepiane",
+        interseccion = "Solis",
+        coordenada = Coordenada(-57.567823,-38.023078)
+    )
+
     private val recorridoConstitucion553 = Recorrido(
+        sentido = "Hacia Constitución",
         paradas = listOf(paradaTalcahuanoJuanBJusto, paradaCordobaAzcuenaga),
+        coordenadas = emptyList()
+    )
+
+    private val recorridoPuerto553 = Recorrido(
+        sentido = "Hacia el Puerto",
+        paradas = listOf(paradaSanLuisJuanBJusto, paradaDellepianeSolis),
         coordenadas = emptyList()
     )
 
     val lineas : List<Linea> = listOf(
 
         Linea(identificador = "551",
-            recorridoIda = Recorrido(paradas = emptyList(), coordenadas = emptyList()),
-            recorridoVuelta = Recorrido( paradas = emptyList(), coordenadas = emptyList())
+            recorridoIda = Recorrido(sentido = "Hacia Constitución",paradas = emptyList(), coordenadas = emptyList()),
+            recorridoVuelta = Recorrido( sentido = "Hacia Constitución",paradas = emptyList(), coordenadas = emptyList())
         ),
         Linea(identificador = "552",
-            recorridoIda = Recorrido(paradas = emptyList(), coordenadas = emptyList()),
-            recorridoVuelta = Recorrido( paradas = emptyList(), coordenadas = emptyList())
+            recorridoIda = Recorrido(sentido = "Hacia Constitución",paradas = emptyList(), coordenadas = emptyList()),
+            recorridoVuelta = Recorrido( sentido = "Hacia Constitución",paradas = emptyList(), coordenadas = emptyList())
         ),
         Linea(identificador = "553",
               recorridoIda = recorridoConstitucion553,
-              recorridoVuelta = Recorrido( paradas = emptyList(), coordenadas = emptyList())
+              recorridoVuelta = recorridoPuerto553
              ),
         Linea(identificador = "555",
-            recorridoIda = Recorrido(paradas = emptyList(), coordenadas = emptyList()),
-            recorridoVuelta = Recorrido( paradas = emptyList(), coordenadas = emptyList())
+            recorridoIda = Recorrido(sentido = "Hacia Constitución",paradas = emptyList(), coordenadas = emptyList()),
+            recorridoVuelta = Recorrido( sentido = "Hacia Constitución",paradas = emptyList(), coordenadas = emptyList())
         )
     )
 }
