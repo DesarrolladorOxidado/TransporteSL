@@ -296,15 +296,22 @@ fun MapaRecorrido(recorrido : Recorrido, modifier: Modifier = Modifier){
 
     // map recorre y transforma cada elemento, devolviendo una nueva colección.
     // Aquí transforma las coordenadas de nuestro modelo en Position para MapLibre.
-    val posiciones  = paradas.map {
+    val posicionesParadas  = paradas.map {
             parada -> Position(
         parada.coordenada.longitud,
         parada.coordenada.latitud)
     }
 
-    val multiPoint = MultiPoint(posiciones)
+    val puntosRecorridos = recorrido.coordenadas
+    val posicionesRecorrido  = puntosRecorridos.map {
+            puntosRecorrido -> Position(
+        puntosRecorrido.longitud,
+        puntosRecorrido.latitud)
+    }
 
-    val lineaRecorrido = LineString(posiciones)
+    val puntosParadas = MultiPoint(posicionesParadas)
+
+    val lineaRecorrido = LineString(posicionesRecorrido)
 
     MaplibreMap(modifier = modifier,
                baseStyle = BaseStyle.Uri(
@@ -313,9 +320,9 @@ fun MapaRecorrido(recorrido : Recorrido, modifier: Modifier = Modifier){
 
                     // Features es una clase anidada dentro de la interfaz GeoJsonData.
                     // GeoJsonData.Features(...) llama al constructor de Features.
-                    val puntoSource = rememberGeoJsonSource(
+                    val paradasSource = rememberGeoJsonSource(
                         data = GeoJsonData.Features(
-                            geoJson = multiPoint
+                            geoJson = puntosParadas
                         )
                     )
 
@@ -330,8 +337,8 @@ fun MapaRecorrido(recorrido : Recorrido, modifier: Modifier = Modifier){
                     //La geometría define QUÉ son los datos;
                     // la Layer define CÓMO se renderizan en el mapa.
                     CircleLayer(
-                        id = "punto-prueba",
-                        source = puntoSource,
+                        id = "paradas",
+                        source = paradasSource,
                         radius = const(10.dp)
                     )
 
