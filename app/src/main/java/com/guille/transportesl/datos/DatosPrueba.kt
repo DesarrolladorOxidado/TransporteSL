@@ -43,13 +43,13 @@ object DatosPrueba {
     private val paradaSanLuisJuanBJusto = Parada(
         callePrincipal = "San Luis",
         interseccion = "Juan B. Justo",
-        coordenada = Coordenada(-57.566718,-38.022157)
+        coordenada = Coordenada(-57.566715,-38.022203)
     )
 
     private val paradaDellepianeSolis = Parada(
         callePrincipal = "Luis Dellepiane",
         interseccion = "Solis",
-        coordenada = Coordenada(-57.567823,-38.023078)
+        coordenada = Coordenada(-57.567645,-38.023013)
     )
 
     private val recorridoConstitucion553 = Recorrido(
@@ -71,8 +71,8 @@ object DatosPrueba {
     private val recorridoPuerto553 = Recorrido(
         sentido = "Hacia el Puerto",
         paradas = listOf(paradaSanLuisJuanBJusto, paradaDellepianeSolis),
-        coordenadas = listOf(Coordenada(-57.566718,-38.022157),
-            Coordenada(-57.567823,-38.023078))
+        coordenadas = listOf(Coordenada(-57.566715,-38.022203),
+            Coordenada(-57.567645,-38.023013))
     )
 
     val lineas : List<Linea> = listOf(

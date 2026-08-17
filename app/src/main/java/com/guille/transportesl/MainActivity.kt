@@ -25,6 +25,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -33,14 +34,19 @@ import androidx.compose.ui.unit.dp
 import com.guille.transportesl.ui.theme.TransporteSLTheme
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import com.guille.transportesl.datos.DatosPrueba
 import com.guille.transportesl.modelos.Linea
 import com.guille.transportesl.modelos.Recorrido
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.expressions.dsl.const
+import org.maplibre.compose.expressions.dsl.image
+import org.maplibre.compose.expressions.value.SymbolPlacement
 import org.maplibre.compose.layers.CircleLayer
 import org.maplibre.compose.layers.LineLayer
+import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
@@ -287,10 +293,7 @@ fun SelectorRecorrido( recorridoSeleccionado : Recorrido, lineaSeleccionada : Li
 @Composable
 fun MapaRecorrido(recorrido : Recorrido, modifier: Modifier = Modifier){
 
-    val cameraState = rememberCameraState( firstPosition = CameraPosition(
-        target = Position(-57.55, -38.00),
-        zoom = 12.0)
-    )
+
 
     val paradas = recorrido.paradas
 
@@ -313,10 +316,34 @@ fun MapaRecorrido(recorrido : Recorrido, modifier: Modifier = Modifier){
 
     val lineaRecorrido = LineString(posicionesRecorrido)
 
+    val iconoFlecha = painterResource(R.drawable.ic_flecha_recorrido)
+
+    val primerPunto = puntosRecorridos.first()
+
+    val cameraState = rememberCameraState( firstPosition = CameraPosition(
+        target = Position(primerPunto.longitud, primerPunto.latitud),
+        tilt = 25.0,
+        zoom = 15.0)
+    )
+
+    LaunchedEffect(recorrido) {
+        cameraState.animateTo(
+            finalPosition = CameraPosition(
+                target = Position(
+                    primerPunto.longitud,
+                    primerPunto.latitud
+                ),
+                tilt = 25.0,
+                zoom = 15.0
+            )
+        )
+    }
+
+
     MaplibreMap(modifier = modifier,
                baseStyle = BaseStyle.Uri(
                     "https://tiles.openfreemap.org/styles/liberty"
-                ),cameraState = cameraState){
+                ),cameraState = cameraState) {
 
                     // Features es una clase anidada dentro de la interfaz GeoJsonData.
                     // GeoJsonData.Features(...) llama al constructor de Features.
@@ -339,13 +366,24 @@ fun MapaRecorrido(recorrido : Recorrido, modifier: Modifier = Modifier){
                     CircleLayer(
                         id = "paradas",
                         source = paradasSource,
-                        radius = const(10.dp)
+                        radius = const(10.dp),
+                        color = const(Color(0xFF1565C0))
                     )
 
                     LineLayer(
                         id = "recorrido",
                         source = recorridoSource,
+                        color = const(Color(0xFF1565C0)),
+                        width = const(8.dp)
                     )
 
-                }
+                    SymbolLayer(
+                        id = "sentido-recorrido",
+                        source = recorridoSource,
+                        placement = const(SymbolPlacement.Line),
+                        spacing = const(5.dp),
+                        iconImage = image(iconoFlecha)
+                    )
+
+    }
 }
