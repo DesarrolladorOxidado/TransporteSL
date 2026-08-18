@@ -33,12 +33,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.guille.transportesl.ui.theme.TransporteSLTheme
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import com.guille.transportesl.datos.DatosPrueba
 import com.guille.transportesl.modelos.Linea
 import com.guille.transportesl.modelos.Recorrido
+import kotlinx.coroutines.launch
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.expressions.dsl.const
@@ -51,9 +53,15 @@ import org.maplibre.compose.map.MaplibreMap
 import org.maplibre.compose.sources.GeoJsonData
 import org.maplibre.compose.sources.rememberGeoJsonSource
 import org.maplibre.compose.style.BaseStyle
+import org.maplibre.compose.util.ClickResult
 import org.maplibre.spatialk.geojson.LineString
-import org.maplibre.spatialk.geojson.MultiPoint
 import org.maplibre.spatialk.geojson.Position
+import org.maplibre.spatialk.geojson.Feature
+import org.maplibre.spatialk.geojson.FeatureCollection
+import org.maplibre.spatialk.geojson.Point
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 
 enum class Pantalla{
     INICIAL,
@@ -203,6 +211,10 @@ fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : Linea
         mutableStateOf(lineaSeleccionada.recorridoIda)
     }
 
+    var mostrarParadas by remember {
+        mutableStateOf( true)
+    }
+
     Column(modifier = modifier
         .fillMaxSize()
         .padding(24.dp),
@@ -231,7 +243,22 @@ fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : Linea
             recorrido -> recorridoSeleccionado = recorrido
         })
 
-        MapaRecorrido(recorridoSeleccionado)
+        Box(modifier = Modifier.fillMaxWidth().weight(1f)){
+
+            MapaRecorrido( recorrido = recorridoSeleccionado,
+                            mostrarParadas = mostrarParadas,
+                            modifier = Modifier.fillMaxSize())
+
+            Button( modifier = Modifier.align(Alignment.TopStart).padding(12.dp),
+                onClick = {
+                mostrarParadas = !mostrarParadas;
+            }) {
+
+                Text( text = if (mostrarParadas){ "Ocultar Paradas"}else{"Mostrar Paradas"})
+            }
+
+        }
+
     }
 }
 @Composable
@@ -291,7 +318,7 @@ fun SelectorRecorrido( recorridoSeleccionado : Recorrido, lineaSeleccionada : Li
 }
 
 @Composable
-fun MapaRecorrido(recorrido : Recorrido, modifier: Modifier = Modifier){
+fun MapaRecorrido(recorrido : Recorrido, mostrarParadas : Boolean, modifier: Modifier = Modifier){
 
 
 
@@ -299,11 +326,30 @@ fun MapaRecorrido(recorrido : Recorrido, modifier: Modifier = Modifier){
 
     // map recorre y transforma cada elemento, devolviendo una nueva colección.
     // Aquí transforma las coordenadas de nuestro modelo en Position para MapLibre.
-    val posicionesParadas  = paradas.map {
+   /* val posicionesParadas  = paradas.map {
             parada -> Position(
         parada.coordenada.longitud,
         parada.coordenada.latitud)
     }
+*/
+    val paradaGeoJson = paradas.map{
+        parada -> Feature(
+           geometry = Point(
+               Position(
+                   parada.coordenada.longitud,
+                   parada.coordenada.latitud
+               )
+           ),
+            properties = buildJsonObject {
+                put("callePrincipal", parada.callePrincipal)
+                put("interseccion", parada.interseccion)
+            }
+        )
+    }
+
+    val coleccionParadas = FeatureCollection(
+        features =  paradaGeoJson
+    )
 
     val puntosRecorridos = recorrido.coordenadas
     val posicionesRecorrido  = puntosRecorridos.map {
@@ -312,78 +358,166 @@ fun MapaRecorrido(recorrido : Recorrido, modifier: Modifier = Modifier){
         puntosRecorrido.latitud)
     }
 
-    val puntosParadas = MultiPoint(posicionesParadas)
-
     val lineaRecorrido = LineString(posicionesRecorrido)
 
     val iconoFlecha = painterResource(R.drawable.ic_flecha_recorrido)
 
     val primerPunto = puntosRecorridos.first()
 
-    val cameraState = rememberCameraState( firstPosition = CameraPosition(
+    val posicionInicial =  CameraPosition(
         target = Position(primerPunto.longitud, primerPunto.latitud),
         tilt = 25.0,
-        zoom = 15.0)
+        zoom = 15.0
     )
 
+    var paradaSeleccionada by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    val estadoCamara = rememberCameraState(
+        firstPosition = posicionInicial
+    )
+
+    val scope = rememberCoroutineScope()
+
     LaunchedEffect(recorrido) {
-        cameraState.animateTo(
-            finalPosition = CameraPosition(
-                target = Position(
-                    primerPunto.longitud,
-                    primerPunto.latitud
-                ),
-                tilt = 25.0,
-                zoom = 15.0
-            )
+        estadoCamara.animateTo(
+            finalPosition = posicionInicial
+
         )
     }
 
+    Box(modifier = Modifier.fillMaxSize()){
+        MaplibreMap(modifier = modifier,
+            baseStyle = BaseStyle.Uri(
+                "https://tiles.openfreemap.org/styles/liberty"
+            ),cameraState = estadoCamara) {
 
-    MaplibreMap(modifier = modifier,
-               baseStyle = BaseStyle.Uri(
-                    "https://tiles.openfreemap.org/styles/liberty"
-                ),cameraState = cameraState) {
+            // Features es una clase anidada dentro de la interfaz GeoJsonData.
+            // GeoJsonData.Features(...) llama al constructor de Features.
+            val paradasSource = rememberGeoJsonSource(
+                data = GeoJsonData.Features(
+                    geoJson = coleccionParadas
+                )
+            )
 
-                    // Features es una clase anidada dentro de la interfaz GeoJsonData.
-                    // GeoJsonData.Features(...) llama al constructor de Features.
-                    val paradasSource = rememberGeoJsonSource(
-                        data = GeoJsonData.Features(
-                            geoJson = puntosParadas
+            // Features envuelve la geometría (MultiPoint/LineString) como GeoJsonData.
+            // rememberGeoJsonSource crea la fuente GeoJSON y la conserva entre recomposiciones.
+            val recorridoSource = rememberGeoJsonSource(
+                data = GeoJsonData.Features(
+                    lineaRecorrido
+                )
+            )
+
+            if ( mostrarParadas ) {
+                //La geometría define QUÉ son los datos;
+                // la Layer define CÓMO se renderizan en el mapa.
+                CircleLayer(
+                    id = "paradas",
+                    source = paradasSource,
+                    radius = const(10.dp),
+                    color = const(Color(0xFF1565C0)),
+                    onClick = {
+                        features -> val paradaTocada = features.first()
+
+                        val callePrincipal =
+                            paradaTocada.properties?.get("callePrincipal")?.jsonPrimitive?.content
+
+                        val interseccion =
+                            paradaTocada.properties?.get("interseccion")?.jsonPrimitive?.content
+
+                        paradaSeleccionada = "$callePrincipal y $interseccion"
+                        ClickResult.Consume
+                    }
+                )
+            }
+
+            LineLayer(
+                id = "recorrido",
+                source = recorridoSource,
+                color = const(Color(0xFF1565C0)),
+                width = const(8.dp)
+            )
+
+            SymbolLayer(
+                id = "sentido-recorrido",
+                source = recorridoSource,
+                placement = const(SymbolPlacement.Line),
+                spacing = const(5.dp),
+                iconImage = image(iconoFlecha)
+            )
+
+        }
+
+        Column(modifier = Modifier.align(Alignment.TopEnd).
+                            padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)){
+
+            Button(
+                onClick = {
+                    val posicionActual = estadoCamara.position
+
+                    scope.launch {
+                        estadoCamara.animateTo(
+                            finalPosition = CameraPosition(
+                                target = posicionActual.target,
+                                zoom = posicionActual.zoom + 1.0,
+                                tilt = posicionActual.tilt,
+                                bearing = posicionActual.bearing
+                            )
                         )
-                    )
+                    }
 
-                    // Features envuelve la geometría (MultiPoint/LineString) como GeoJsonData.
-                    // rememberGeoJsonSource crea la fuente GeoJSON y la conserva entre recomposiciones.
-                    val recorridoSource = rememberGeoJsonSource(
-                        data = GeoJsonData.Features(
-                            lineaRecorrido
+                }){
+                Text( text = "+")
+            }
+
+            Button(
+                onClick = {
+                    val posicionActual = estadoCamara.position
+
+                    scope.launch {
+                        estadoCamara.animateTo(
+                            finalPosition = CameraPosition(
+                                target = posicionActual.target,
+                                zoom = posicionActual.zoom - 1.0,
+                                tilt = posicionActual.tilt,
+                                bearing = posicionActual.bearing
+                            )
                         )
-                    )
+                    }
 
-                    //La geometría define QUÉ son los datos;
-                    // la Layer define CÓMO se renderizan en el mapa.
-                    CircleLayer(
-                        id = "paradas",
-                        source = paradasSource,
-                        radius = const(10.dp),
-                        color = const(Color(0xFF1565C0))
-                    )
+                }){
+                Text( text = "-")
+            }
 
-                    LineLayer(
-                        id = "recorrido",
-                        source = recorridoSource,
-                        color = const(Color(0xFF1565C0)),
-                        width = const(8.dp)
-                    )
+            Button(
+                onClick = {
+                    scope.launch {
+                        estadoCamara.animateTo(
+                            finalPosition = CameraPosition(
+                                target = posicionInicial.target,
+                                zoom = posicionInicial.zoom ,
+                                tilt = posicionInicial.tilt,
+                                bearing = posicionInicial.bearing
+                            )
+                        )
+                    }
 
-                    SymbolLayer(
-                        id = "sentido-recorrido",
-                        source = recorridoSource,
-                        placement = const(SymbolPlacement.Line),
-                        spacing = const(5.dp),
-                        iconImage = image(iconoFlecha)
-                    )
+                }){
+                Text( text = "R")
+            }
 
+        }
+
+        if (paradaSeleccionada != null) {
+            Text(
+                text = paradaSeleccionada!!,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp)
+            )
+        }
     }
+
 }
