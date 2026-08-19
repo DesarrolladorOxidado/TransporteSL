@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -324,14 +325,6 @@ fun MapaRecorrido(recorrido : Recorrido, mostrarParadas : Boolean, modifier: Mod
 
     val paradas = recorrido.paradas
 
-    // map recorre y transforma cada elemento, devolviendo una nueva colección.
-    // Aquí transforma las coordenadas de nuestro modelo en Position para MapLibre.
-   /* val posicionesParadas  = paradas.map {
-            parada -> Position(
-        parada.coordenada.longitud,
-        parada.coordenada.latitud)
-    }
-*/
     val paradaGeoJson = paradas.map{
         parada -> Feature(
            geometry = Point(
@@ -388,6 +381,7 @@ fun MapaRecorrido(recorrido : Recorrido, mostrarParadas : Boolean, modifier: Mod
     }
 
     Box(modifier = Modifier.fillMaxSize()){
+
         MaplibreMap(modifier = modifier,
             baseStyle = BaseStyle.Uri(
                 "https://tiles.openfreemap.org/styles/liberty"
@@ -417,8 +411,18 @@ fun MapaRecorrido(recorrido : Recorrido, mostrarParadas : Boolean, modifier: Mod
                     source = paradasSource,
                     radius = const(10.dp),
                     color = const(Color(0xFF1565C0)),
+
+                )
+
+                //Momentáneo, hasta usar los íconos de paradas
+                //Es para mejorar el touch en las paradas para visualizar sus datos
+                CircleLayer(
+                    id = "toque-paradas",
+                    source = paradasSource,
+                    radius = const(15.dp),
+                    color = const(Color(0x001565C0)),
                     onClick = {
-                        features -> val paradaTocada = features.first()
+                            features -> val paradaTocada = features.first()
 
                         val callePrincipal =
                             paradaTocada.properties?.get("callePrincipal")?.jsonPrimitive?.content
@@ -448,6 +452,41 @@ fun MapaRecorrido(recorrido : Recorrido, mostrarParadas : Boolean, modifier: Mod
             )
 
         }
+
+        if (paradaSeleccionada != null) {
+
+            Card(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    Text(
+                        text = paradaSeleccionada!!,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    Button(
+                        onClick = {
+                            paradaSeleccionada = null
+                        }
+                    ) {
+                        Text("X")
+                    }
+                }
+            }
+        }
+
+
+
 
         Column(modifier = Modifier.align(Alignment.TopEnd).
                             padding(12.dp),
@@ -510,14 +549,7 @@ fun MapaRecorrido(recorrido : Recorrido, mostrarParadas : Boolean, modifier: Mod
 
         }
 
-        if (paradaSeleccionada != null) {
-            Text(
-                text = paradaSeleccionada!!,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(16.dp)
-            )
-        }
+
     }
 
 }
