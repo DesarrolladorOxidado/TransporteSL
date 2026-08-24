@@ -41,7 +41,12 @@ Más que construir una aplicación, el objetivo es construir una base técnica s
 
 **En desarrollo.**
 
-Actualmente el proyecto se encuentra en una etapa inicial de aprendizaje y construcción de la base técnica.
+Actualmente el proyecto cuenta con una primera versión funcional de la
+visualización de recorridos y paradas sobre el mapa.
+
+El desarrollo continúa de forma incremental, incorporando nuevas funcionalidades
+mientras se profundiza en Kotlin, Jetpack Compose, MapLibre Compose y en la
+organización del código.
 
 ---
 
@@ -57,11 +62,17 @@ Actualmente el proyecto se encuentra en una etapa inicial de aprendizaje y const
 * Desarrollo de la primera interfaz.
 * Navegación entre pantallas.
 * Integración inicial con mapas mediante MapLibre Compose.
+* Visualización de recorridos sobre el mapa.
+* Representación visual del sentido del recorrido.
+* Controles básicos de cámara: zoom y restablecimiento de la posición inicial.
+* Visualización y ocultamiento de paradas sobre el mapa.
+* Selección de paradas mediante interacción táctil.
+* Visualización de información de la parada seleccionada.
 
 ### 🔄 Próximos pasos
 
-* Visualización de recorridos.
-* Gestión de datos del transporte.
+* Mejorar la representación visual de las paradas mediante íconos.
+* Gestionar los datos del transporte.
 * Mejoras de arquitectura y organización del proyecto.
 
 ---
