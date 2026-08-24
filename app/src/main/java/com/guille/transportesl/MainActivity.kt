@@ -356,6 +356,7 @@ fun MapaRecorrido(recorrido : Recorrido, mostrarParadas : Boolean, modifier: Mod
     val lineaRecorrido = LineString(posicionesRecorrido)
 
     val iconoFlecha = painterResource(R.drawable.ic_flecha_recorrido)
+    val iconoParada = painterResource(R.drawable.ic_parada_colectivo)
 
     val primerPunto = puntosRecorridos.first()
 
@@ -405,9 +406,11 @@ fun MapaRecorrido(recorrido : Recorrido, mostrarParadas : Boolean, modifier: Mod
                 )
             )
 
+            RepresentarRecorrido(recorridoSource,iconoFlecha)
+
             if ( mostrarParadas ) {
 
-                RepresentarParadas(paradasSource = paradasSource, onParadaTouch = {
+                RepresentarParadas(paradasSource = paradasSource, iconoParada = iconoParada, onParadaTouch = {
                         features -> val paradaTocada = features.first()
 
                         val callePrincipal =
@@ -421,7 +424,6 @@ fun MapaRecorrido(recorrido : Recorrido, mostrarParadas : Boolean, modifier: Mod
                 })
             }
 
-            RepresentarRecorrido(recorridoSource,iconoFlecha)
 
         }
 
@@ -477,30 +479,24 @@ fun MapaRecorrido(recorrido : Recorrido, mostrarParadas : Boolean, modifier: Mod
 }
 
 @Composable
-fun RepresentarParadas(paradasSource : GeoJsonSource, onParadaTouch : (List<Feature<Geometry, JsonObject?>>)-> Unit){
+fun RepresentarParadas(paradasSource : GeoJsonSource, iconoParada : Painter, onParadaTouch : (List<Feature<Geometry, JsonObject?>>)-> Unit){
 
     //La geometría define QUÉ son los datos;
     // la Layer define CÓMO se renderizan en el mapa.
-    CircleLayer(
+    SymbolLayer(
         id = "paradas",
         source = paradasSource,
-        radius = const(10.dp),
-        color = const(Color(0xFF1565C0))
-        )
-
-    //Momentáneo, hasta usar los íconos de paradas
-    //Es para mejorar el touch en las paradas para visualizar sus datos
-    CircleLayer(
-        id = "toque-paradas",
-        source = paradasSource,
-        radius = const(15.dp),
-        color = const(Color(0x001565C0)),
+        placement = const(SymbolPlacement.Point),
+        iconImage = image(iconoParada),
+        iconSize = const(0.25f),
+        iconAllowOverlap = const(true),
         onClick = {
-            features -> onParadaTouch(features)
+                features -> onParadaTouch(features)
 
             ClickResult.Consume
         }
     )
+
 }
 
 @Composable
