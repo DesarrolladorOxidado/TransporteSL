@@ -37,11 +37,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
 import com.guille.transportesl.datos.DatosPrueba
 import com.guille.transportesl.modelos.Linea
 import com.guille.transportesl.modelos.Recorrido
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonObject
 import org.maplibre.compose.camera.CameraPosition
 import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.expressions.dsl.const
@@ -63,6 +65,8 @@ import org.maplibre.spatialk.geojson.Point
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import org.maplibre.compose.sources.GeoJsonSource
+import org.maplibre.spatialk.geojson.Geometry
 
 enum class Pantalla{
     INICIAL,
@@ -321,8 +325,6 @@ fun SelectorRecorrido( recorridoSeleccionado : Recorrido, lineaSeleccionada : Li
 @Composable
 fun MapaRecorrido(recorrido : Recorrido, mostrarParadas : Boolean, modifier: Modifier = Modifier){
 
-
-
     val paradas = recorrido.paradas
 
     val paradaGeoJson = paradas.map{
@@ -404,25 +406,9 @@ fun MapaRecorrido(recorrido : Recorrido, mostrarParadas : Boolean, modifier: Mod
             )
 
             if ( mostrarParadas ) {
-                //La geometría define QUÉ son los datos;
-                // la Layer define CÓMO se renderizan en el mapa.
-                CircleLayer(
-                    id = "paradas",
-                    source = paradasSource,
-                    radius = const(10.dp),
-                    color = const(Color(0xFF1565C0)),
 
-                )
-
-                //Momentáneo, hasta usar los íconos de paradas
-                //Es para mejorar el touch en las paradas para visualizar sus datos
-                CircleLayer(
-                    id = "toque-paradas",
-                    source = paradasSource,
-                    radius = const(15.dp),
-                    color = const(Color(0x001565C0)),
-                    onClick = {
-                            features -> val paradaTocada = features.first()
+                RepresentarParadas(paradasSource = paradasSource, onParadaTouch = {
+                        features -> val paradaTocada = features.first()
 
                         val callePrincipal =
                             paradaTocada.properties?.get("callePrincipal")?.jsonPrimitive?.content
@@ -430,126 +416,173 @@ fun MapaRecorrido(recorrido : Recorrido, mostrarParadas : Boolean, modifier: Mod
                         val interseccion =
                             paradaTocada.properties?.get("interseccion")?.jsonPrimitive?.content
 
-                        paradaSeleccionada = "$callePrincipal y $interseccion"
-                        ClickResult.Consume
-                    }
-                )
+                            paradaSeleccionada = "$callePrincipal y $interseccion"
+
+                })
             }
 
-            LineLayer(
-                id = "recorrido",
-                source = recorridoSource,
-                color = const(Color(0xFF1565C0)),
-                width = const(8.dp)
-            )
-
-            SymbolLayer(
-                id = "sentido-recorrido",
-                source = recorridoSource,
-                placement = const(SymbolPlacement.Line),
-                spacing = const(5.dp),
-                iconImage = image(iconoFlecha)
-            )
+            RepresentarRecorrido(recorridoSource,iconoFlecha)
 
         }
 
         if (paradaSeleccionada != null) {
 
-            Card(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
+            MostrarTarjetaInfoParadaSeleccionada(paradaSeleccionada = paradaSeleccionada!!, onClick = {
+                paradaSeleccionada = null
+            }, modifier = Modifier.align(Alignment.BottomCenter))
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+        }
 
-                    Text(
-                        text = paradaSeleccionada!!,
-                        modifier = Modifier.weight(1f)
+        ControlCamara( onZoomIn = {
+                val posicionActual = estadoCamara.position
+
+                scope.launch {
+                    estadoCamara.animateTo(
+                        finalPosition = CameraPosition(
+                            target = posicionActual.target,
+                            zoom = posicionActual.zoom + 1.0,
+                            tilt = posicionActual.tilt,
+                            bearing = posicionActual.bearing
+                        )
                     )
-
-                    Button(
-                        onClick = {
-                            paradaSeleccionada = null
-                        }
-                    ) {
-                        Text("X")
-                    }
                 }
-            }
-        }
+        }, onZoomOut = {
+                val posicionActual = estadoCamara.position
 
-
-
-
-        Column(modifier = Modifier.align(Alignment.TopEnd).
-                            padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)){
-
-            Button(
-                onClick = {
-                    val posicionActual = estadoCamara.position
-
-                    scope.launch {
-                        estadoCamara.animateTo(
-                            finalPosition = CameraPosition(
-                                target = posicionActual.target,
-                                zoom = posicionActual.zoom + 1.0,
-                                tilt = posicionActual.tilt,
-                                bearing = posicionActual.bearing
-                            )
+                scope.launch {
+                    estadoCamara.animateTo(
+                        finalPosition = CameraPosition(
+                            target = posicionActual.target,
+                            zoom = posicionActual.zoom - 1.0,
+                            tilt = posicionActual.tilt,
+                            bearing = posicionActual.bearing
                         )
-                    }
-
-                }){
-                Text( text = "+")
-            }
-
-            Button(
-                onClick = {
-                    val posicionActual = estadoCamara.position
-
-                    scope.launch {
-                        estadoCamara.animateTo(
-                            finalPosition = CameraPosition(
-                                target = posicionActual.target,
-                                zoom = posicionActual.zoom - 1.0,
-                                tilt = posicionActual.tilt,
-                                bearing = posicionActual.bearing
-                            )
+                    )
+                }
+        }, onReset = {
+                scope.launch {
+                    estadoCamara.animateTo(
+                        finalPosition = CameraPosition(
+                            target = posicionInicial.target,
+                            zoom = posicionInicial.zoom ,
+                            tilt = posicionInicial.tilt,
+                            bearing = posicionInicial.bearing
                         )
-                    }
-
-                }){
-                Text( text = "-")
-            }
-
-            Button(
-                onClick = {
-                    scope.launch {
-                        estadoCamara.animateTo(
-                            finalPosition = CameraPosition(
-                                target = posicionInicial.target,
-                                zoom = posicionInicial.zoom ,
-                                tilt = posicionInicial.tilt,
-                                bearing = posicionInicial.bearing
-                            )
-                        )
-                    }
-
-                }){
-                Text( text = "R")
-            }
-
-        }
-
+                    )
+                }
+        }, modifier = Modifier.align(Alignment.TopEnd))
 
     }
 
+}
+
+@Composable
+fun RepresentarParadas(paradasSource : GeoJsonSource, onParadaTouch : (List<Feature<Geometry, JsonObject?>>)-> Unit){
+
+    //La geometría define QUÉ son los datos;
+    // la Layer define CÓMO se renderizan en el mapa.
+    CircleLayer(
+        id = "paradas",
+        source = paradasSource,
+        radius = const(10.dp),
+        color = const(Color(0xFF1565C0))
+        )
+
+    //Momentáneo, hasta usar los íconos de paradas
+    //Es para mejorar el touch en las paradas para visualizar sus datos
+    CircleLayer(
+        id = "toque-paradas",
+        source = paradasSource,
+        radius = const(15.dp),
+        color = const(Color(0x001565C0)),
+        onClick = {
+            features -> onParadaTouch(features)
+
+            ClickResult.Consume
+        }
+    )
+}
+
+@Composable
+fun RepresentarRecorrido(recorridoSource : GeoJsonSource, iconoSentidoRecorrido : Painter){
+
+    LineLayer(
+        id = "recorrido",
+        source = recorridoSource,
+        color = const(Color(0xFF1565C0)),
+        width = const(8.dp)
+    )
+
+    SymbolLayer(
+        id = "sentido-recorrido",
+        source = recorridoSource,
+        placement = const(SymbolPlacement.Line),
+        spacing = const(5.dp),
+        iconImage = image(iconoSentidoRecorrido)
+    )
+
+}
+
+
+@Composable
+fun MostrarTarjetaInfoParadaSeleccionada(paradaSeleccionada : String, onClick: () -> Unit, modifier: Modifier = Modifier){
+
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Text(
+                text = paradaSeleccionada,
+                modifier = Modifier.weight(1f)
+            )
+
+            Button(
+                onClick = {
+                    onClick()
+                }
+            ) {
+                Text("X")
+            }
+        }
+    }
+}
+
+@Composable
+fun ControlCamara(onZoomIn : ()-> Unit, onZoomOut : ()-> Unit, onReset: () ->Unit,modifier: Modifier = Modifier){
+
+    Column(modifier = modifier.
+    padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)){
+
+        Button(
+            onClick = {
+                onZoomIn()
+            }){
+            Text( text = "+")
+        }
+
+        Button(
+            onClick = {
+               onZoomOut()
+            }){
+            Text( text = "-")
+        }
+
+        Button(
+            onClick = {
+                onReset()
+            }){
+            Text( text = "R")
+        }
+
+    }
 }
