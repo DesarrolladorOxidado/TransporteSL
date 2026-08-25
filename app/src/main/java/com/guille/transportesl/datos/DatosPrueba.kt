@@ -4,6 +4,7 @@ import com.guille.transportesl.modelos.Coordenada
 import com.guille.transportesl.modelos.Linea
 import com.guille.transportesl.modelos.Parada
 import com.guille.transportesl.modelos.Recorrido
+import com.guille.transportesl.modelos.TipoServicio
 
 // object crea una única instancia de DatosPrueba (Singleton).
 // Se accede directamente sin instanciar la clase
@@ -53,6 +54,7 @@ object DatosPrueba {
     )
 
     private val recorridoConstitucion553 = Recorrido(
+        ramal = null,
         sentido = "Hacia Constitución",
         paradas = listOf(paradaTalcahuanoJuanBJusto, paradaCordobaAzcuenaga, paradaCordobaRawson,
             paradaCordobaColon, paradaLamadridAvPeraltaRamos),
@@ -69,6 +71,7 @@ object DatosPrueba {
 
 
     private val recorridoPuerto553 = Recorrido(
+        ramal = null,
         sentido = "Hacia el Puerto",
         paradas = listOf(paradaSanLuisJuanBJusto, paradaDellepianeSolis),
         coordenadas = listOf(Coordenada(-57.566715,-38.022203),
@@ -78,20 +81,20 @@ object DatosPrueba {
     val lineas : List<Linea> = listOf(
 
         Linea(identificador = "551",
-            recorridoIda = Recorrido(sentido = "Hacia Constitución",paradas = emptyList(), coordenadas = emptyList()),
-            recorridoVuelta = Recorrido( sentido = "Hacia Constitución",paradas = emptyList(), coordenadas = emptyList())
-        ),
+            servicio = TipoServicio.URBANO,
+            recorridos = listOf(recorridoConstitucion553,recorridoPuerto553)
+            ),
         Linea(identificador = "552",
-            recorridoIda = Recorrido(sentido = "Hacia Constitución",paradas = emptyList(), coordenadas = emptyList()),
-            recorridoVuelta = Recorrido( sentido = "Hacia Constitución",paradas = emptyList(), coordenadas = emptyList())
+            servicio = TipoServicio.URBANO,
+            recorridos = listOf(recorridoConstitucion553,recorridoPuerto553)
         ),
         Linea(identificador = "553",
-              recorridoIda = recorridoConstitucion553,
-              recorridoVuelta = recorridoPuerto553
+            servicio = TipoServicio.URBANO,
+            recorridos = listOf(recorridoConstitucion553,recorridoPuerto553)
              ),
         Linea(identificador = "555",
-            recorridoIda = Recorrido(sentido = "Hacia Constitución",paradas = emptyList(), coordenadas = emptyList()),
-            recorridoVuelta = Recorrido( sentido = "Hacia Constitución",paradas = emptyList(), coordenadas = emptyList())
+            servicio = TipoServicio.URBANO,
+            recorridos = listOf(recorridoConstitucion553,recorridoPuerto553)
         )
     )
 }

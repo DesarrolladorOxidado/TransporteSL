@@ -213,7 +213,7 @@ fun PantallaSeleccion( modifier : Modifier = Modifier, onSeleccionLinea : (Linea
 fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : Linea, onVolver : () -> Unit){
 
     var recorridoSeleccionado by remember {
-        mutableStateOf(lineaSeleccionada.recorridoIda)
+        mutableStateOf(lineaSeleccionada.recorridos.first())
     }
 
     var mostrarParadas by remember {
@@ -301,22 +301,15 @@ fun SelectorRecorrido( recorridoSeleccionado : Recorrido, lineaSeleccionada : Li
         DropdownMenu(expanded = menuExpandido, onDismissRequest = {
             menuExpandido = false
         }) {
+                lineaSeleccionada.recorridos.forEach {
+                    recorrido -> DropdownMenuItem( text = {
+                                    Text( text = recorrido.sentido) },
+                                            onClick = {
+                                                onSeleccionRecorrido(recorrido)
+                                                menuExpandido = false
+                                            })
+            }
 
-            DropdownMenuItem( text = {
-                Text( text = lineaSeleccionada.recorridoIda.sentido) },
-                onClick = {
-                    onSeleccionRecorrido(lineaSeleccionada.recorridoIda)
-                    menuExpandido = false
-                })
-
-            DropdownMenuItem(
-                text = {
-                    Text( text = lineaSeleccionada.recorridoVuelta.sentido)
-                },
-                onClick = {
-                    onSeleccionRecorrido(lineaSeleccionada.recorridoVuelta)
-                    menuExpandido = false
-                })
         }
     }
 
