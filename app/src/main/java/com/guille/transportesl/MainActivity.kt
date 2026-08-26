@@ -49,7 +49,6 @@ import org.maplibre.compose.camera.rememberCameraState
 import org.maplibre.compose.expressions.dsl.const
 import org.maplibre.compose.expressions.dsl.image
 import org.maplibre.compose.expressions.value.SymbolPlacement
-import org.maplibre.compose.layers.CircleLayer
 import org.maplibre.compose.layers.LineLayer
 import org.maplibre.compose.layers.SymbolLayer
 import org.maplibre.compose.map.MaplibreMap
@@ -291,19 +290,20 @@ fun SelectorRecorrido( recorridoSeleccionado : Recorrido, lineaSeleccionada : Li
         mutableStateOf(false)
     }
 
+    val textoRecorrido =
+
     Box{
         Surface( onClick = {
             menuExpandido = true
         }) {
-            Text( text = recorridoSeleccionado.sentido)
+            Text( text = obtenerTextoRecorrido(recorridoSeleccionado))
         }
 
         DropdownMenu(expanded = menuExpandido, onDismissRequest = {
             menuExpandido = false
         }) {
                 lineaSeleccionada.recorridos.forEach {
-                    recorrido -> DropdownMenuItem( text = {
-                                    Text( text = recorrido.sentido) },
+                    recorrido -> DropdownMenuItem( text = {Text( text = obtenerTextoRecorrido(recorrido)) },
                                             onClick = {
                                                 onSeleccionRecorrido(recorrido)
                                                 menuExpandido = false
@@ -573,5 +573,13 @@ fun ControlCamara(onZoomIn : ()-> Unit, onZoomOut : ()-> Unit, onReset: () ->Uni
             Text( text = "R")
         }
 
+    }
+}
+
+fun obtenerTextoRecorrido(recorrido: Recorrido): String {
+    return if (recorrido.ramal == null) {
+        recorrido.sentido
+    } else {
+        recorrido.ramal + " - " + recorrido.sentido
     }
 }
