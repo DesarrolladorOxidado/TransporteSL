@@ -1,6 +1,7 @@
 package com.guille.transportesl.datos
 
 import com.guille.transportesl.modelos.Coordenada
+import com.guille.transportesl.modelos.Empresa
 import com.guille.transportesl.modelos.Linea
 import com.guille.transportesl.modelos.Parada
 import com.guille.transportesl.modelos.Recorrido
@@ -10,6 +11,8 @@ import com.guille.transportesl.modelos.TipoServicio
 // Se accede directamente sin instanciar la clase
 // Se utiliza como fuente temporal de datos mientras no exista una fuente de datos real.
 object DatosPrueba {
+
+    private val empresaPeraltaRamos = Empresa("Peralta Ramos")
 
     private val paradaTalcahuanoJuanBJusto = Parada(
         callePrincipal = "Talcahuano",
@@ -81,18 +84,22 @@ object DatosPrueba {
     val lineas : List<Linea> = listOf(
 
         Linea(identificador = "551",
+            empresa = empresaPeraltaRamos,
             servicio = TipoServicio.URBANO,
             recorridos = listOf(recorridoConstitucion553,recorridoPuerto553)
             ),
         Linea(identificador = "552",
+            empresa = empresaPeraltaRamos,
             servicio = TipoServicio.URBANO,
             recorridos = listOf(recorridoConstitucion553,recorridoPuerto553)
         ),
         Linea(identificador = "553",
+            empresa = empresaPeraltaRamos,
             servicio = TipoServicio.URBANO,
             recorridos = listOf(recorridoConstitucion553,recorridoPuerto553)
              ),
         Linea(identificador = "555",
+            empresa = empresaPeraltaRamos,
             servicio = TipoServicio.URBANO,
             recorridos = listOf(recorridoConstitucion553,recorridoPuerto553)
         )
