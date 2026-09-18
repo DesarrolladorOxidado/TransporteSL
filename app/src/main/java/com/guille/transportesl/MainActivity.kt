@@ -38,8 +38,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.IntSize
 import com.guille.transportesl.datos.DatosPrueba
+import com.guille.transportesl.modelos.LimitesRecorrido
 import com.guille.transportesl.modelos.Linea
 import com.guille.transportesl.modelos.Recorrido
 import kotlinx.coroutines.launch
@@ -66,12 +70,19 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import org.maplibre.compose.sources.GeoJsonSource
 import org.maplibre.spatialk.geojson.Geometry
+import org.maplibre.spatialk.turf.measurement.distance
+import org.maplibre.spatialk.units.extensions.inMeters
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.log2
 
 enum class Pantalla{
     INICIAL,
     SELECCION_LINEA,
     RECORRIDO
 }
+
+private const val PROPORCION_MAPA_RECORRIDO = 0.7
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -290,8 +301,6 @@ fun SelectorRecorrido( recorridoSeleccionado : Recorrido, lineaSeleccionada : Li
         mutableStateOf(false)
     }
 
-    val textoRecorrido =
-
     Box{
         Surface( onClick = {
             menuExpandido = true
@@ -351,12 +360,48 @@ fun MapaRecorrido(recorrido : Recorrido, mostrarParadas : Boolean, modifier: Mod
     val iconoFlecha = painterResource(R.drawable.ic_flecha_recorrido)
     val iconoParada = painterResource(R.drawable.ic_parada_colectivo)
 
-    val primerPunto = puntosRecorridos.first()
+    val limitesRecorrido = calcularLimitesRecorrido(recorridoSeleccionado = recorrido)
+
+    val longitudCentro = (limitesRecorrido.longitudMinima + limitesRecorrido.longitudMaxima)/2
+    val latitudCentro  = (limitesRecorrido.latitudMinima + limitesRecorrido.latitudMaxima)/2
+
+    val puntoNorte = Position(longitudCentro,limitesRecorrido.latitudMaxima)
+    val puntoSur = Position(longitudCentro,limitesRecorrido.latitudMinima)
+    val distanciaVerticalMetros = distance(puntoNorte,puntoSur).inMeters
+
+    val puntoOeste = Position(limitesRecorrido.longitudMinima, latitudCentro)
+    val puntoEste = Position(limitesRecorrido.longitudMaxima,latitudCentro)
+
+    val distanciaHorizontalMetros = distance(puntoOeste,puntoEste).inMeters
+
+    var tamanioMapa by remember {
+        mutableStateOf(IntSize.Zero)
+    }
+
+    val densidadPantalla = LocalDensity.current
+
+    var zoomRecorrido by remember {
+        mutableStateOf<Double?>(null)
+    }
+
+    if (tamanioMapa != IntSize.Zero){
+
+        val metrosPixelVertical = distanciaVerticalMetros / ((tamanioMapa.height/ densidadPantalla.density)*PROPORCION_MAPA_RECORRIDO)
+        val metrosPixelHorizontal = distanciaHorizontalMetros / ((tamanioMapa.width/ densidadPantalla.density)*PROPORCION_MAPA_RECORRIDO)
+
+        val zoomVertical = calcularZoom(metrosPixelVertical, latitudCentro)
+
+        val zoomHorizontal = calcularZoom(metrosPixelHorizontal, latitudCentro)
+
+        zoomRecorrido = minOf(zoomVertical, zoomHorizontal)
+
+    }
+
 
     val posicionInicial =  CameraPosition(
-        target = Position(primerPunto.longitud, primerPunto.latitud),
+        target = Position(longitudCentro, latitudCentro),
         tilt = 25.0,
-        zoom = 15.0
+        zoom = zoomRecorrido ?: 15.0
     )
 
     var paradaSeleccionada by remember {
@@ -369,16 +414,16 @@ fun MapaRecorrido(recorrido : Recorrido, mostrarParadas : Boolean, modifier: Mod
 
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(recorrido) {
+    LaunchedEffect(recorrido, zoomRecorrido) {
+        println("LaunchedEffect - zoom: ${posicionInicial.zoom}")
         estadoCamara.animateTo(
             finalPosition = posicionInicial
-
         )
     }
 
     Box(modifier = Modifier.fillMaxSize()){
 
-        MaplibreMap(modifier = modifier,
+        MaplibreMap(modifier = modifier.onSizeChanged{ nuevoTamanioMapa ->  tamanioMapa = nuevoTamanioMapa },
             baseStyle = BaseStyle.Uri(
                 "https://tiles.openfreemap.org/styles/liberty"
             ),cameraState = estadoCamara) {
@@ -582,4 +627,74 @@ fun obtenerTextoRecorrido(recorrido: Recorrido): String {
     } else {
         recorrido.ramal + " - " + recorrido.sentido
     }
+}
+
+fun calcularLimitesRecorrido( recorridoSeleccionado : Recorrido ) : LimitesRecorrido{
+
+    val limiteRecorrido =LimitesRecorrido(
+        latitudMinima = recorridoSeleccionado.coordenadas.minOf {
+                coordenada -> coordenada.latitud
+        },
+        latitudMaxima = recorridoSeleccionado.coordenadas.maxOf {
+                coordenada -> coordenada.latitud
+        },
+        longitudMinima = recorridoSeleccionado.coordenadas.minOf {
+                coordenada -> coordenada.longitud
+        },
+        longitudMaxima = recorridoSeleccionado.coordenadas.maxOf{
+                coordenada -> coordenada.longitud
+        }
+    )
+
+    val limiteParadas = LimitesRecorrido(
+        latitudMinima = recorridoSeleccionado.paradas.minOf {
+                parada -> parada.coordenada.latitud
+        },
+        latitudMaxima = recorridoSeleccionado.paradas.maxOf {
+                parada -> parada.coordenada.latitud
+        },
+        longitudMinima = recorridoSeleccionado.paradas.minOf {
+                parada -> parada.coordenada.longitud
+        },
+        longitudMaxima = recorridoSeleccionado.paradas.maxOf{
+                parada -> parada.coordenada.longitud
+        }
+    )
+
+    return LimitesRecorrido(
+        latitudMinima = minOf(limiteRecorrido.latitudMinima,limiteParadas.latitudMinima),
+        latitudMaxima = maxOf(limiteRecorrido.latitudMaxima,limiteParadas.latitudMaxima),
+        longitudMinima = minOf(limiteRecorrido.longitudMinima,limiteParadas.longitudMinima),
+        longitudMaxima = maxOf(limiteRecorrido.longitudMaxima,limiteParadas.longitudMaxima)
+    )
+
+}
+
+/*
+ * Calcula el nivel de zoom necesario a partir de una escala
+ * expresada en metros por píxel y una latitud.
+ *
+ * Esta función invierte la relación utilizada por MapLibre para calcular
+ * los metros por píxel en función de la latitud y el nivel de zoom.
+ *
+ * Referencia:
+ * https://maplibre.org/maplibre-native/cpp/api/projection_8hpp_source.html
+ */
+fun calcularZoom(metrosPorPixel : Double, latitud : Double) : Double {
+    // Radio terrestre utilizado por la proyección Web Mercator.
+    // Se usa para obtener la circunferencia terrestre y calcular
+    // la escala de referencia (metros por píxel) en zoom 0.
+    val radioTierra = 6_378_137.0
+
+    val circunferenciaTierra = 2 * PI * radioTierra
+
+    // Calcula la escala en zoom 0 para la latitud recibida.
+    // cos() requiere la latitud en radianes, por eso se convierte desde grados.
+    // MapLibre utiliza tiles de 512 px como tamaño base para sus cálculos de zoom.
+    val metrosPorPixelZoom0 = circunferenciaTierra * cos(Math.toRadians(latitud)) / 512
+
+    // Cada nivel de zoom divide por 2 los metros representados por píxel.
+    // log2() permite obtener cuántos niveles de zoom hay entre la escala
+    // de referencia del zoom 0 y la escala que necesitamos.
+    return log2(metrosPorPixelZoom0 / metrosPorPixel)
 }
