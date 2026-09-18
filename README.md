@@ -28,6 +28,7 @@ Más que construir una aplicación, el objetivo es construir una base técnica s
 * Android Studio
 * Jetpack Compose
 * MapLibre Compose
+* SpatialK / Turf
 * OpenStreetMap (OSM)
 * OpenFreeMap
 * Git
@@ -41,12 +42,15 @@ Más que construir una aplicación, el objetivo es construir una base técnica s
 
 **En desarrollo.**
 
-Actualmente el proyecto cuenta con una primera versión funcional de la
-visualización de recorridos y paradas sobre el mapa.
+En desarrollo.
 
-El desarrollo continúa de forma incremental, incorporando nuevas funcionalidades
-mientras se profundiza en Kotlin, Jetpack Compose, MapLibre Compose y en la
-organización del código.
+Actualmente el proyecto cuenta con una primera versión funcional de la visualización de líneas, recorridos y paradas sobre el mapa.
+
+Es posible seleccionar una línea y sus diferentes recorridos, visualizar el trazado y su sentido, interactuar con las paradas para consultar su información y controlar la cámara del mapa.
+
+El encuadre inicial del mapa se adapta automáticamente a las dimensiones del recorrido seleccionado, teniendo en cuenta el espacio disponible en pantalla.
+
+El desarrollo continúa de forma incremental, incorporando nuevas funcionalidades mientras se profundiza en Kotlin, Jetpack Compose, MapLibre Compose y en la organización del código.
 
 ---
 
@@ -62,17 +66,21 @@ organización del código.
 * Desarrollo de la primera interfaz.
 * Navegación entre pantallas.
 * Integración inicial con mapas mediante MapLibre Compose.
+* Modelado de líneas, empresas, recorridos y paradas.
+* Selección de líneas y recorridos.
 * Visualización de recorridos sobre el mapa.
 * Representación visual del sentido del recorrido.
 * Controles básicos de cámara: zoom y restablecimiento de la posición inicial.
 * Visualización y ocultamiento de paradas sobre el mapa.
+* Representación de paradas mediante íconos.
 * Selección de paradas mediante interacción táctil.
 * Visualización de información de la parada seleccionada.
+* Cálculo automático del encuadre y zoom inicial según las dimensiones del recorrido.
 
 ### 🔄 Próximos pasos
 
-* Mejorar la representación visual de las paradas mediante íconos.
-* Gestionar los datos del transporte.
+* Limitar el nivel máximo de alejamiento del mapa.
+* Gestionar los datos reales del transporte.
 * Mejoras de arquitectura y organización del proyecto.
 
 ---
