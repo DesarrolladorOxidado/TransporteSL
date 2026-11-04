@@ -1,5 +1,6 @@
 package com.guille.transportesl
 
+import PantallaSeleccion
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
@@ -159,42 +160,7 @@ fun TransporteSLApp(modifier : Modifier = Modifier){
 
 
 
-@Composable
-fun PantallaSeleccion( modifier : Modifier = Modifier, onSeleccionLinea : (Linea) -> Unit, onVolver : () -> Unit, lineas : List<Linea>){
 
-    Column( modifier = modifier
-        .fillMaxSize()
-        .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally) {
-
-        Box(modifier = Modifier.fillMaxWidth()) {
-
-            Button(modifier = Modifier.align(Alignment.CenterStart),
-                onClick = onVolver) {
-                Text(text = "<-")
-            }
-
-            Text(
-                modifier = Modifier.align(Alignment.Center),
-                text = "Seleccioná una línea",
-                style = MaterialTheme.typography.titleLarge
-            )
-        }
-
-        Spacer(Modifier.height(15.dp))
-
-        LazyColumn(modifier = Modifier
-            .fillMaxWidth()
-            .weight(1f)) {
-            items(lineas) { linea -> ItemLinea( linea = linea, onClick = {
-                onSeleccionLinea(linea)
-            })
-                HorizontalDivider()
-            }
-        }
-
-    }
-}
 @Composable
 fun PantallaRecorrido( modifier : Modifier = Modifier, lineaSeleccionada : Linea, onVolver : () -> Unit){
 
