@@ -46,6 +46,7 @@ import com.guille.transportesl.datos.DatosPrueba
 import com.guille.transportesl.modelos.LimitesRecorrido
 import com.guille.transportesl.modelos.Linea
 import com.guille.transportesl.modelos.Recorrido
+import com.guille.transportesl.pantallas.PantallaInicial
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonObject
 import org.maplibre.compose.camera.CameraPosition
@@ -156,32 +157,7 @@ fun TransporteSLApp(modifier : Modifier = Modifier){
     }
 }
 
-@Composable
-fun PantallaInicial(modifier : Modifier = Modifier, onContinuar : ()-> Unit){
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
 
-        Text(
-            text = "TransporteSL",
-            style = MaterialTheme.typography.headlineMedium
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        Text(text = "Información del transporte público de San Luis")
-        Spacer(modifier = Modifier.height(24.dp))
-        Button(onClick = onContinuar)
-        {
-            Text(
-                text = "Continuar",
-                style = MaterialTheme.typography.titleLarge
-            )
-        }
-    }
-}
 
 @Composable
 fun PantallaSeleccion( modifier : Modifier = Modifier, onSeleccionLinea : (Linea) -> Unit, onVolver : () -> Unit, lineas : List<Linea>){
